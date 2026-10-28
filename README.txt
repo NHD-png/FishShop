@@ -7,6 +7,8 @@ WEBBANCA - HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY
 2) Chép nguyên thư mục WebBanCa vào:  C:\xampp\htdocs\WebBanCa\
 3) Mở http://localhost/phpmyadmin > tab "Nhập" (Import) > Chọn tệp database\WebBanCa.sql > Thực hiện.
    (File tự tạo database WebBanCa và 7 bảng; KHÔNG có dữ liệu mẫu.)
+   Sau đó chọn database WebBanCa và nhập database\rank_migration.sql để thêm Rank.
+   Nếu website đã có dữ liệu, chỉ chạy rank_migration.sql; không nhập lại file cài đặt gốc.
 4) Kiểm tra config\database.php: mặc định root, mật khẩu rỗng (đúng với XAMPP).
    Nếu bạn đặt thư mục tên khác, đổi BASE_URL trong file này.
 5) Mở http://localhost/WebBanCa/  (chưa đăng nhập sẽ tự chuyển sang trang đăng nhập).
@@ -30,9 +32,14 @@ Thư mục uploads\products và uploads\avatars đã có sẵn; PHP tự lưu �
 ---------------------
 users 1 --- 1 cart 1 --- n cart_items n --- 1 products n --- 1 categories
 users 1 --- n orders 1 --- n order_items n --- 1 products
+users 1 --- 1 customer_ranks; users 1 --- n rank_order_earnings n --- 1 orders
 - cart.user_id UNIQUE: mỗi người dùng một giỏ hàng.
 - cart_items UNIQUE(cart_id, product_id): không trùng dòng sản phẩm trong giỏ.
 - order_items.price: giá tại thời điểm mua.
+- customer_ranks.user_id UNIQUE: mỗi tài khoản có tối đa một hồ sơ Rank; tổng chi tiêu hợp lệ
+  giữ cả phần dư dưới 1.000 đồng để cộng EXP chính xác qua nhiều đơn.
+- rank_order_earnings.order_id PRIMARY KEY: một đơn chỉ được cộng một lần; khoản điểm bị vô hiệu
+  khi đơn không còn vừa completed vừa paid.
 - order_items.product_id và orders.user_id dùng ON DELETE RESTRICT: không xóa được
   sản phẩm/người dùng đã có đơn, nên lịch sử mua hàng không bị mất. Sản phẩm được "Ngừng bán" thay vì xóa.
 
@@ -45,6 +52,9 @@ users 1 --- n orders 1 --- n order_items n --- 1 products
 - Trạng thái thanh toán ban đầu: unpaid. Khách bấm "Tôi đã chuyển khoản" > pending_verification.
   CHỈ quản trị viên (admin/orders.php) mới đặt được paid.
 - Hủy đơn trong trang quản trị sẽ hoàn lại tồn kho.
+- Rank chỉ nhận EXP khi admin chọn cả "Đã hoàn thành" và "Đã thanh toán"; đơn cũ thỏa điều kiện
+  được backfill khi chạy rank_migration.sql. Hiện website chưa có trạng thái/luồng hoàn tiền riêng;
+  khi đơn bị hủy hoặc chuyển khỏi trạng thái hợp lệ, điểm của đơn đó được điều chỉnh lại.
 
 6. KIỂM TRA TỪNG CHỨC NĂNG
 --------------------------
@@ -63,6 +73,11 @@ users 1 --- n orders 1 --- n order_items n --- 1 products
 [ ] Đăng nhập tài khoản khác, mở purchase_history.php?id=<mã đơn người khác>: bị chặn.
 [ ] Tài khoản customer mở /WebBanCa/admin/: bị chuyển về trang chủ kèm thông báo.
 [ ] Admin xác nhận "Đã thanh toán" trong admin/orders.php; khách thấy trạng thái cập nhật.
+[ ] Admin đặt đơn sang "Đã hoàn thành" đồng thời giữ "Đã thanh toán"; hồ sơ khách nhận EXP đúng theo
+    tổng order_items (100.000 đồng = 100 EXP), gồm phần dư tích lũy giữa các đơn nhỏ.
+[ ] Thử tổng 500 EXP, 20.000 EXP và 100.000 EXP để kiểm tra các mốc Vàng, Cao Thủ, Thách Đấu;
+    lưu lại trạng thái đơn lần nữa không cộng điểm trùng.
+[ ] Đơn pending/unpaid hoặc cancelled không được tính; hủy đơn đủ điều kiện sẽ rút khoản điểm đó.
 
 7. LỖI THƯỜNG GẶP
 -----------------

@@ -7,6 +7,102 @@ function redirect(string $path): void { header('Location: ' . url($path)); exit;
 
 const ORDER_STATUS = ['pending'=>'Chờ xác nhận','confirmed'=>'Đã xác nhận','shipping'=>'Đang giao','completed'=>'Đã hoàn thành','cancelled'=>'Đã hủy'];
 const PAYMENT_STATUS = ['unpaid'=>'Chưa thanh toán','pending_verification'=>'Chờ xác minh thanh toán','paid'=>'Đã thanh toán','rejected'=>'Thanh toán bị từ chối'];
+const CUSTOMER_RANKS = [
+    ['code' => 'dong', 'name' => 'Đồng', 'min' => 0],
+    ['code' => 'bac', 'name' => 'Bạc', 'min' => 100],
+    ['code' => 'vang', 'name' => 'Vàng', 'min' => 500],
+    ['code' => 'bach_kim', 'name' => 'Bạch Kim', 'min' => 1000],
+    ['code' => 'kim_cuong', 'name' => 'Kim Cương', 'min' => 3000],
+    ['code' => 'tinh_anh', 'name' => 'Tinh Anh', 'min' => 10000],
+    ['code' => 'cao_thu', 'name' => 'Cao Thủ', 'min' => 20000],
+    ['code' => 'chien_tuong', 'name' => 'Chiến Tướng', 'min' => 50000],
+    ['code' => 'thach_dau', 'name' => 'Thách Đấu', 'min' => 100000],
+];
+
+function customer_rank(int $exp): array {
+    $current = CUSTOMER_RANKS[0];
+    foreach (CUSTOMER_RANKS as $index => $rank) {
+        if ($exp >= $rank['min']) $current = $rank;
+        if ($rank['code'] === $current['code']) {
+            $currentIndex = $index;
+        }
+    }
+    return ['current' => $current, 'next' => CUSTOMER_RANKS[$currentIndex + 1] ?? null];
+}
+
+function ensure_rank_profile(PDO $pdo, int $userId): void {
+    $pdo->prepare(
+        "INSERT INTO customer_ranks (user_id, total_exp, total_eligible_spend, spend_remainder, current_rank)
+         VALUES (?, 0, 0, 0, 'dong')
+         ON DUPLICATE KEY UPDATE user_id = VALUES(user_id)"
+    )->execute([$userId]);
+}
+
+// Gọi bên trong transaction đang cập nhật trạng thái đơn hàng.
+function sync_order_rank(PDO $pdo, int $orderId): array {
+    $orderSt = $pdo->prepare('SELECT user_id, status, payment_status FROM orders WHERE id = ? FOR UPDATE');
+    $orderSt->execute([$orderId]);
+    $order = $orderSt->fetch();
+    if (!$order) throw new RuntimeException('Không tìm thấy đơn hàng cần đồng bộ Rank.');
+
+    $userId = (int)$order['user_id'];
+    ensure_rank_profile($pdo, $userId);
+    $rankSt = $pdo->prepare('SELECT total_exp, total_eligible_spend FROM customer_ranks WHERE user_id = ? FOR UPDATE');
+    $rankSt->execute([$userId]);
+    $profile = $rankSt->fetch();
+    if (!$profile) throw new RuntimeException('Không thể khóa bản ghi Rank của khách hàng.');
+
+    $ledgerSt = $pdo->prepare('SELECT spend_amount, is_active FROM rank_order_earnings WHERE order_id = ? FOR UPDATE');
+    $ledgerSt->execute([$orderId]);
+    $ledger = $ledgerSt->fetch();
+    $eligible = $order['status'] === 'completed' && $order['payment_status'] === 'paid';
+    $amount = 0;
+    if ($eligible) {
+        $amountSt = $pdo->prepare('SELECT COALESCE(SUM(price * quantity), 0) FROM order_items WHERE order_id = ?');
+        $amountSt->execute([$orderId]);
+        $amount = (int)$amountSt->fetchColumn();
+    }
+
+    $oldAmount = $ledger && (int)$ledger['is_active'] === 1 ? (int)$ledger['spend_amount'] : 0;
+    $newAmount = $eligible ? $amount : 0;
+    if (!$ledger && $eligible) {
+        $pdo->prepare('INSERT INTO rank_order_earnings (order_id, user_id, spend_amount, is_active) VALUES (?, ?, ?, 1)')
+            ->execute([$orderId, $userId, $amount]);
+    } elseif ($ledger) {
+        $pdo->prepare('UPDATE rank_order_earnings SET spend_amount = ?, is_active = ? WHERE order_id = ?')
+            ->execute([$eligible ? $amount : (int)$ledger['spend_amount'], $eligible ? 1 : 0, $orderId]);
+    }
+
+    $totalSpend = (int)$profile['total_eligible_spend'] + $newAmount - $oldAmount;
+    if ($totalSpend < 0) throw new RuntimeException('Tổng chi tiêu hợp lệ của Rank không thể âm.');
+    $totalExp = intdiv($totalSpend, 1000);
+    $rank = customer_rank($totalExp);
+    $previousRank = customer_rank((int)$profile['total_exp'])['current'];
+    $previousIndex = array_search($previousRank['code'], array_column(CUSTOMER_RANKS, 'code'), true);
+    $currentIndex = array_search($rank['current']['code'], array_column(CUSTOMER_RANKS, 'code'), true);
+    $rankedUp = $currentIndex > $previousIndex;
+
+    $pdo->prepare(
+        "UPDATE customer_ranks
+         SET total_eligible_spend = ?, total_exp = ?, spend_remainder = ?, current_rank = ?,
+             last_rank_up_at = CASE
+                 WHEN ? = 1 THEN CURRENT_TIMESTAMP
+                 WHEN ? = 1 THEN NULL
+                 ELSE last_rank_up_at
+             END
+         WHERE user_id = ?"
+    )->execute([
+        $totalSpend,
+        $totalExp,
+        $totalSpend % 1000,
+        $rank['current']['code'],
+        $rankedUp ? 1 : 0,
+        $currentIndex < $previousIndex ? 1 : 0,
+        $userId,
+    ]);
+
+    return ['ranked_up' => $rankedUp, 'rank' => $rank['current']['name']];
+}
 
 // ----- CSRF -----
 function csrf_token(): string {

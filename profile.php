@@ -2,6 +2,19 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/upload.php';
 $user = requireLogin();
+$uid = (int)$user['id'];
+ensure_rank_profile(db(), $uid);
+$rankSt = db()->prepare('SELECT total_exp, total_eligible_spend, spend_remainder, current_rank, last_rank_up_at FROM customer_ranks WHERE user_id = ?');
+$rankSt->execute([$uid]);
+$rankProfile = $rankSt->fetch();
+$rankInfo = customer_rank((int)$rankProfile['total_exp']);
+$nextRank = $rankInfo['next'];
+$rankProgress = $nextRank
+    ? min(100, max(0, ((int)$rankProfile['total_exp'] - $rankInfo['current']['min']) / ($nextRank['min'] - $rankInfo['current']['min']) * 100))
+    : 100;
+$justRankedUp = $rankProfile['last_rank_up_at']
+    && time() - strtotime($rankProfile['last_rank_up_at']) <= 86400
+    && $rankProfile['current_rank'] === $rankInfo['current']['code'];
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -50,6 +63,26 @@ include __DIR__ . '/includes/header.php';
       <div class="field"><label for="address">Địa chỉ</label><textarea id="address" name="address"><?= e($user['address']) ?></textarea></div>
       <button class="btn" type="submit">Lưu thay đổi</button>
     </form>
+  </section>
+  <section class="card">
+    <h2 style="font-size:18px">Hạng khách hàng</h2>
+    <?php if ($justRankedUp): ?><div class="alert ok rank-notice">Chúc mừng! Bạn vừa đạt Rank <?= e($rankInfo['current']['name']) ?>.</div><?php endif; ?>
+    <div class="rank-heading">
+      <span class="rank-badge"><?= e($rankInfo['current']['name']) ?></span>
+      <strong><?= number_format((int)$rankProfile['total_exp'], 0, ',', '.') ?> EXP</strong>
+    </div>
+    <?php if ($nextRank): ?>
+      <div class="rank-meta">
+        <span>Rank tiếp theo: <b><?= e($nextRank['name']) ?></b> — <?= number_format($nextRank['min'], 0, ',', '.') ?> EXP</span>
+        <span>Còn <?= number_format(max(0, $nextRank['min'] - (int)$rankProfile['total_exp']), 0, ',', '.') ?> EXP</span>
+      </div>
+      <div class="rank-progress" role="progressbar" aria-label="Tiến trình lên Rank <?= e($nextRank['name']) ?>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int)round($rankProgress) ?>">
+        <span style="width:<?= e(number_format($rankProgress, 2, '.', '')) ?>%"></span>
+      </div>
+    <?php else: ?>
+      <p class="rank-meta">Bạn đã đạt Rank cao nhất: Thách Đấu.</p>
+    <?php endif; ?>
+    <p class="rank-footnote">Tích lũy <?= number_format((int)$rankProfile['spend_remainder'], 0, ',', '.') ?> ₫ / 1.000 ₫ cho EXP kế tiếp.</p>
   </section>
   <section class="card">
     <h2 style="font-size:18px">Tài khoản</h2>

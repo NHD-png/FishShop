@@ -27,8 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare('UPDATE products p JOIN order_items oi ON oi.product_id = p.id SET p.stock = p.stock + oi.quantity WHERE oi.order_id = ?')->execute([$oid]);
         }
         $pdo->prepare('UPDATE orders SET status = ?, payment_status = ? WHERE id = ?')->execute([$newStatus, $newPay, $oid]);
+        $rankUpdate = sync_order_rank($pdo, $oid);
         $pdo->commit();
-        flash('success', 'Đã cập nhật đơn hàng #' . $oid . '.');
+        $message = 'Đã cập nhật đơn hàng #' . $oid . '.';
+        if ($rankUpdate['ranked_up']) $message .= ' Khách hàng đã thăng hạng ' . $rankUpdate['rank'] . '.';
+        flash('success', $message);
     } catch (Throwable $ex) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         flash('error', 'Không cập nhật được đơn hàng.');

@@ -23,14 +23,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($st->fetchColumn()) {
             $errors[] = 'Tên đăng nhập đã tồn tại, hãy chọn tên khác.';
         } else {
+            $pdo = db();
             try {
                 // role luôn là customer; quản trị viên phải được cấp trong phpMyAdmin (xem README)
-                db()->prepare('INSERT INTO users (username, password, fullname, phone, address, role) VALUES (?,?,?,?,?, "customer")')
+                $pdo->beginTransaction();
+                $pdo->prepare('INSERT INTO users (username, password, fullname, phone, address, role) VALUES (?,?,?,?,?, "customer")')
                     ->execute([$old['username'], password_hash($password, PASSWORD_DEFAULT), $old['fullname'], $old['phone'], $old['address']]);
+                $userId = (int)$pdo->lastInsertId();
+                $pdo->prepare("INSERT INTO customer_ranks (user_id, total_exp, total_eligible_spend, spend_remainder, current_rank) VALUES (?, 0, 0, 0, 'dong')")
+                    ->execute([$userId]);
+                $pdo->commit();
                 flash('success', 'Đăng ký thành công. Hãy đăng nhập.');
                 redirect('login.php');
             } catch (PDOException $ex) {
-                $errors[] = ($ex->getCode() === '23000') ? 'Tên đăng nhập đã tồn tại, hãy chọn tên khác.' : 'Không thể tạo tài khoản, vui lòng thử lại.';
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                $errors[] = 'Không thể tạo tài khoản, vui lòng thử lại.';
+                if ($ex->getCode() === '23000') {
+                    $check = $pdo->prepare('SELECT 1 FROM users WHERE username = ?');
+                    $check->execute([$old['username']]);
+                    if ($check->fetchColumn()) $errors[count($errors) - 1] = 'Tên đăng nhập đã tồn tại, hãy chọn tên khác.';
+                }
+            } catch (Throwable $ex) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                $errors[] = 'Không thể tạo tài khoản, vui lòng thử lại.';
             }
         }
     }

@@ -32,7 +32,7 @@ include __DIR__ . '/includes/header.php';
     <?php elseif ($o['payment_status'] === 'rejected'): ?>
       <div class="alert err">Thanh toán chưa được xác nhận. Vui lòng kiểm tra lại giao dịch và báo lại, hoặc liên hệ cửa hàng.</div>
     <?php else: ?>
-      <div class="alert warn">Đơn hàng đang chờ thanh toán. Website chưa tích hợp cổng thanh toán tự động nên không tự biết tiền đã về.</div>
+      <div class="alert warn">Đơn hàng đang chờ thanh toán. Hệ thống chưa tự động nhận biết giao dịch do cần kết nối với ngân hàng hoặc cổng thanh toán.</div>
     <?php endif; ?>
     <div class="acts-row" style="margin-top:8px">
       <?php if ($o['status'] !== 'cancelled' && in_array($o['payment_status'], ['unpaid', 'rejected'], true)): ?>
