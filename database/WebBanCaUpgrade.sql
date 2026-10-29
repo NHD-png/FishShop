@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 28, 2026 lúc 04:46 PM
+-- Thời gian đã tạo: Th10 29, 2026 lúc 05:16 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.0.30
 
@@ -83,7 +83,8 @@ CREATE TABLE `customer_ranks` (
 --
 
 INSERT INTO `customer_ranks` (`id`, `user_id`, `total_exp`, `total_eligible_spend`, `spend_remainder`, `current_rank`, `last_rank_up_at`, `created_at`, `updated_at`) VALUES
-(1, 1, 0, 0, 0, 'dong', NULL, '2026-10-28 15:40:49', '2026-10-28 15:40:49');
+(1, 1, 0, 0, 0, 'dong', NULL, '2026-10-28 15:40:49', '2026-10-28 15:40:49'),
+(2, 2, 0, 0, 0, 'dong', NULL, '2026-10-29 15:28:40', '2026-10-29 15:28:40');
 
 -- --------------------------------------------------------
 
@@ -114,6 +115,32 @@ CREATE TABLE `order_items` (
   `product_id` int(10) UNSIGNED NOT NULL,
   `quantity` int(10) UNSIGNED NOT NULL,
   `price` decimal(12,0) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `password_reset_attempts`
+--
+
+CREATE TABLE `password_reset_attempts` (
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `failed_attempts` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
+  `locked_until` datetime DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `password_reset_tokens`
+--
+
+CREATE TABLE `password_reset_tokens` (
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `token_hash` char(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -161,10 +188,18 @@ CREATE TABLE `users` (
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL COMMENT 'Chuỗi băm từ password_hash()',
   `fullname` varchar(100) NOT NULL,
+  `email` varchar(254) DEFAULT NULL,
+  `security_question` varchar(40) DEFAULT NULL,
+  `security_answer_hash` varchar(255) DEFAULT NULL,
   `phone` varchar(20) NOT NULL,
   `address` varchar(255) NOT NULL DEFAULT '',
   `avatar` varchar(255) DEFAULT NULL,
   `role` enum('customer','admin') NOT NULL DEFAULT 'customer',
+  `account_status` enum('active','locked') NOT NULL DEFAULT 'active',
+  `locked_reason` varchar(64) DEFAULT NULL,
+  `locked_note` text DEFAULT NULL,
+  `locked_at` datetime DEFAULT NULL,
+  `locked_by_admin_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -172,8 +207,32 @@ CREATE TABLE `users` (
 -- Đang đổ dữ liệu cho bảng `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `fullname`, `phone`, `address`, `avatar`, `role`, `created_at`) VALUES
-(1, 'DuySieuCapDeptrai', '$2y$10$rmtLXlTfWhkJaossU2UODe58JNKrp5QPrz/RTWHx8UmqYv5HTI1ui', 'Nguyễn Hoàng Duy', '00000000000', 'Duy_Vip_Pro', NULL, 'admin', '2026-10-28 15:40:49');
+INSERT INTO `users` (`id`, `username`, `password`, `fullname`, `email`, `security_question`, `security_answer_hash`, `phone`, `address`, `avatar`, `role`, `account_status`, `locked_reason`, `locked_note`, `locked_at`, `locked_by_admin_id`, `created_at`) VALUES
+(1, 'DuySieuCapDeptrai', '$2y$10$rmtLXlTfWhkJaossU2UODe58JNKrp5QPrz/RTWHx8UmqYv5HTI1ui', 'Nguyễn Hoàng Duy', NULL, 'favorite_teacher', '$2y$10$GztX4qcjTgIGXhh5hdP.AuIlLRiew5K3Zc50fa8F2PuwbVyVIRBGW', '00000000000', 'Duy_Vip_Pro', NULL, 'admin', 'active', NULL, NULL, NULL, NULL, '2026-10-28 15:40:49'),
+(2, 'KhangGay', '$2y$10$m8hgdOa2MtkUSe9eKunTIedwpo.v9TnKwf9axNi6DQw.Nx9Ovtou2', 'Hồ Thái Khang', 'fff2@gmail.com', 'favorite_teacher', '$2y$10$pjYo4IU3fiwjQLnp.CLO6OSNIenwzGfHGN.PtJyimhXpOld3o6aNC', '', 'Địa Ngục', NULL, 'customer', 'locked', 'Có dấu hiệu gian lận đơn hàng', '', '2026-10-29 23:09:52', 1, '2026-10-29 15:28:40');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `user_account_lock_history`
+--
+
+CREATE TABLE `user_account_lock_history` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `action` enum('lock','unlock') NOT NULL,
+  `reason` varchar(64) DEFAULT NULL,
+  `note` text DEFAULT NULL,
+  `performed_by_admin_id` int(10) UNSIGNED NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `user_account_lock_history`
+--
+
+INSERT INTO `user_account_lock_history` (`id`, `user_id`, `action`, `reason`, `note`, `performed_by_admin_id`, `created_at`) VALUES
+(1, 2, 'lock', 'Có dấu hiệu gian lận đơn hàng', '', 1, '2026-10-29 16:09:52');
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -225,6 +284,18 @@ ALTER TABLE `order_items`
   ADD KEY `idx_order_items_product` (`product_id`);
 
 --
+-- Chỉ mục cho bảng `password_reset_attempts`
+--
+ALTER TABLE `password_reset_attempts`
+  ADD PRIMARY KEY (`user_id`);
+
+--
+-- Chỉ mục cho bảng `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD PRIMARY KEY (`user_id`);
+
+--
 -- Chỉ mục cho bảng `products`
 --
 ALTER TABLE `products`
@@ -244,7 +315,18 @@ ALTER TABLE `rank_order_earnings`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_users_username` (`username`);
+  ADD UNIQUE KEY `uq_users_username` (`username`),
+  ADD UNIQUE KEY `uq_users_email` (`email`),
+  ADD KEY `idx_users_account_status` (`account_status`),
+  ADD KEY `idx_users_locked_by_admin` (`locked_by_admin_id`);
+
+--
+-- Chỉ mục cho bảng `user_account_lock_history`
+--
+ALTER TABLE `user_account_lock_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_lock_history_user` (`user_id`),
+  ADD KEY `idx_user_lock_history_admin` (`performed_by_admin_id`);
 
 --
 -- AUTO_INCREMENT cho các bảng đã đổ
@@ -272,7 +354,7 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT cho bảng `customer_ranks`
 --
 ALTER TABLE `customer_ranks`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT cho bảng `orders`
@@ -296,6 +378,12 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT cho bảng `users`
 --
 ALTER TABLE `users`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT cho bảng `user_account_lock_history`
+--
+ALTER TABLE `user_account_lock_history`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
@@ -333,6 +421,18 @@ ALTER TABLE `orders`
 ALTER TABLE `order_items`
   ADD CONSTRAINT `fk_order_items_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_order_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON UPDATE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `password_reset_attempts`
+--
+ALTER TABLE `password_reset_attempts`
+  ADD CONSTRAINT `fk_password_reset_attempts_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD CONSTRAINT `fk_password_reset_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `products`

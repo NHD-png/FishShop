@@ -8,6 +8,10 @@ const DB_PASS = '';       // XAMPP mặc định: để trống
 // Đường dẫn gốc của website (kết thúc bằng dấu /). Đổi nếu đặt thư mục tên khác.
 const BASE_URL = '/WebBanCa/';
 
+// Điền thông tin liên hệ thật của Admin; để trống nếu chưa cấu hình.
+const ADMIN_CONTACT_EMAIL = '';
+const ADMIN_CONTACT_PHONE = '';
+
 function db(): PDO
 {
     static $pdo = null;

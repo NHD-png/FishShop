@@ -103,16 +103,25 @@
   // ----- Kiểm tra biểu mẫu phía trình duyệt (PHP vẫn kiểm tra lại) -----
   var rules = {
     username: function (v) { return /^[A-Za-z0-9_]{3,30}$/.test(v) ? '' : 'Tên đăng nhập 3-30 ký tự: chữ, số hoặc dấu gạch dưới.'; },
-    password: function (v) { return v.length >= 6 ? '' : 'Mật khẩu tối thiểu 6 ký tự.'; },
+    password: function (v) {
+      if (v.length < 8) return 'Mật khẩu tối thiểu 8 ký tự.';
+      if (!/[A-Z]/.test(v) || !/[a-z]/.test(v) || !/[0-9]/.test(v) || !/[^A-Za-z0-9]/.test(v)) {
+        return 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt.';
+      }
+      return '';
+    },
     fullname: function (v) { return v.trim().length >= 2 ? '' : 'Vui lòng nhập họ tên.'; },
     phone: function (v) { return /^[0-9]{9,11}$/.test(v.trim()) ? '' : 'Số điện thoại gồm 9-11 chữ số.'; },
-    address: function (v) { return v.trim().length >= 5 ? '' : 'Vui lòng nhập địa chỉ đầy đủ.'; }
+    address: function (v) { return v.trim().length >= 5 ? '' : 'Vui lòng nhập địa chỉ đầy đủ.'; },
+    email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? '' : 'Email không hợp lệ.'; },
+    security_question: function (v) { return v !== '' ? '' : 'Vui lòng chọn câu hỏi bảo mật.'; },
+    security_answer: function (v) { return v.trim().length >= 2 ? '' : 'Vui lòng nhập câu trả lời bảo mật.'; }
   };
   document.querySelectorAll('form.js-validate').forEach(function (form) {
     form.addEventListener('submit', function (ev) {
       var bad = false;
       form.querySelectorAll('.field').forEach(function (f) {
-        var input = f.querySelector('input, textarea');
+        var input = f.querySelector('input, textarea, select');
         if (!input) return;
         var msg = '';
         var rule = rules[input.dataset.rule];
@@ -127,7 +136,7 @@
         f.classList.toggle('invalid', !!msg);
         if (msg) bad = true;
       });
-      if (bad) { ev.preventDefault(); var first = form.querySelector('.invalid input, .invalid textarea'); if (first) first.focus(); }
+      if (bad) { ev.preventDefault(); var first = form.querySelector('.invalid input, .invalid textarea, .invalid select'); if (first) first.focus(); }
     });
   });
 

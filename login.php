@@ -5,22 +5,27 @@ if (isLoggedIn()) redirect('index.php');   // đã đăng nhập thì không ở
 $error = '';
 $username = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = (string)($_POST['password'] ?? '');
+    $username = trim(post_string('username'));
+    $password = post_string('password');
     if (!csrf_ok()) {
         $error = 'Phiên làm việc không hợp lệ, vui lòng thử lại.';
     } elseif ($username === '' || $password === '') {
         $error = 'Vui lòng nhập tên đăng nhập và mật khẩu.';
     } else {
-        $st = db()->prepare('SELECT id, password FROM users WHERE username = ?');
+        $st = db()->prepare('SELECT id, password, account_status FROM users WHERE username = ?');
         $st->execute([$username]);
         $row = $st->fetch();
         if ($row && password_verify($password, $row['password'])) {
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = (int)$row['id'];
-            redirect('index.php');
+            if (($row['account_status'] ?? 'active') === 'locked') {
+                $error = 'Tài khoản này đang bị khóa. Vui lòng liên hệ Quản trị viên để được hỗ trợ.';
+            } else {
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = (int)$row['id'];
+                redirect('index.php');
+            }
+        } else {
+            $error = 'Tên đăng nhập hoặc mật khẩu không đúng.';
         }
-        $error = 'Tên đăng nhập hoặc mật khẩu không đúng.';
     }
 }
 $pageTitle = 'Đăng nhập'; $minimal = true;
@@ -46,6 +51,7 @@ include __DIR__ . '/includes/header.php';
     </div>
     <button class="btn block" type="submit">Đăng nhập</button>
   </form>
+  <p class="switch"><a href="<?= url('forgot_password.php') ?>">Quên mật khẩu?</a></p>
   <p class="switch">Chưa có tài khoản? <a href="<?= url('register.php') ?>">Đăng ký</a></p>
 </section>
 <?php include __DIR__ . '/includes/footer.php'; ?>

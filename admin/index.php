@@ -6,7 +6,8 @@ $stats = [
     'Sản phẩm đang bán' => $one("SELECT COUNT(*) FROM products WHERE status='active'"),
     'Đơn chờ xác nhận' => $one("SELECT COUNT(*) FROM orders WHERE status='pending'"),
     'Thanh toán chờ xác minh' => $one("SELECT COUNT(*) FROM orders WHERE payment_status='pending_verification' AND status<>'cancelled'"),
-    'Khách hàng' => $one("SELECT COUNT(*) FROM users WHERE role='customer'"),
+    'Khách hàng hoạt động' => $one("SELECT COUNT(*) FROM users WHERE role='customer' AND account_status='active'"),
+    'Khách hàng bị khóa' => $one("SELECT COUNT(*) FROM users WHERE role='customer' AND account_status='locked'"),
 ];
 $pageTitle = 'Quản trị';
 include __DIR__ . '/../includes/header.php';

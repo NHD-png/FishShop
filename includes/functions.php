@@ -4,9 +4,17 @@ function e($s): string { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'
 function money($v): string { return number_format((float)$v, 0, ',', '.') . ' ₫'; }
 function url(string $path = ''): string { return BASE_URL . ltrim($path, '/'); }
 function redirect(string $path): void { header('Location: ' . url($path)); exit; }
+function post_string(string $key): string { return isset($_POST[$key]) && is_string($_POST[$key]) ? $_POST[$key] : ''; }
 
 const ORDER_STATUS = ['pending'=>'Chờ xác nhận','confirmed'=>'Đã xác nhận','shipping'=>'Đang giao','completed'=>'Đã hoàn thành','cancelled'=>'Đã hủy'];
 const PAYMENT_STATUS = ['unpaid'=>'Chưa thanh toán','pending_verification'=>'Chờ xác minh thanh toán','paid'=>'Đã thanh toán','rejected'=>'Thanh toán bị từ chối'];
+const SECURITY_QUESTIONS = [
+    'first_school' => 'Tên trường tiểu học đầu tiên của bạn là gì?',
+    'first_pet' => 'Tên thú cưng đầu tiên của bạn là gì?',
+    'birth_city' => 'Bạn sinh ra ở thành phố nào?',
+    'favorite_teacher' => 'Tên giáo viên bạn yêu quý nhất là gì?',
+    'childhood_friend' => 'Tên người bạn thân thời thơ ấu của bạn là gì?',
+];
 const CUSTOMER_RANKS = [
     ['code' => 'dong', 'name' => 'Đồng', 'min' => 0],
     ['code' => 'bac', 'name' => 'Bạc', 'min' => 100],
@@ -28,6 +36,32 @@ function customer_rank(int $exp): array {
         }
     }
     return ['current' => $current, 'next' => CUSTOMER_RANKS[$currentIndex + 1] ?? null];
+}
+
+function normalize_security_answer(string $answer): string {
+    $normalized = preg_replace('/\s+/u', ' ', trim($answer));
+    if ($normalized === null) return '';
+    return mb_strtolower($normalized, 'UTF-8');
+}
+
+function security_answer_errors(string $answer): array {
+    $errors = [];
+    if (mb_strlen($answer, 'UTF-8') < 2 || mb_strlen($answer, 'UTF-8') > 255) {
+        $errors[] = 'Câu trả lời bảo mật từ 2 đến 255 ký tự.';
+    }
+    if (strlen($answer) > 72) $errors[] = 'Câu trả lời bảo mật không được vượt quá 72 byte.';
+    return $errors;
+}
+
+function password_policy_errors(string $password): array {
+    $errors = [];
+    if (mb_strlen($password, 'UTF-8') < 8) $errors[] = 'Mật khẩu tối thiểu 8 ký tự.';
+    if (!preg_match('/[A-Z]/', $password)) $errors[] = 'Mật khẩu phải có ít nhất một chữ hoa.';
+    if (!preg_match('/[a-z]/', $password)) $errors[] = 'Mật khẩu phải có ít nhất một chữ thường.';
+    if (!preg_match('/[0-9]/', $password)) $errors[] = 'Mật khẩu phải có ít nhất một chữ số.';
+    if (!preg_match('/[^A-Za-z0-9]/', $password)) $errors[] = 'Mật khẩu phải có ít nhất một ký tự đặc biệt.';
+    if (strlen($password) > 72) $errors[] = 'Mật khẩu không được vượt quá 72 byte.';
+    return $errors;
 }
 
 function ensure_rank_profile(PDO $pdo, int $userId): void {
@@ -111,7 +145,10 @@ function csrf_token(): string {
 }
 function csrf_field(): string { return '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">'; }
 function csrf_ok(): bool {
-    return isset($_POST['csrf'], $_SESSION['csrf']) && hash_equals($_SESSION['csrf'], (string)$_POST['csrf']);
+    return isset($_POST['csrf'], $_SESSION['csrf'])
+        && is_string($_POST['csrf'])
+        && is_string($_SESSION['csrf'])
+        && hash_equals($_SESSION['csrf'], $_POST['csrf']);
 }
 
 // ----- Thông báo flash -----
