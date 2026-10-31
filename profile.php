@@ -128,7 +128,8 @@ include __DIR__ . '/includes/header.php';
     <?php else: ?>
       <p class="rank-meta">Bạn đã đạt Rank cao nhất: Thách Đấu.</p>
     <?php endif; ?>
-    <p class="rank-footnote">Tích lũy <?= number_format((int)$rankProfile['spend_remainder'], 0, ',', '.') ?> ₫ / 1.000 ₫ cho EXP kế tiếp.</p>
+    <p class="rank-footnote">Đơn đã hoàn thành và đã thanh toán: <?= number_format(RANK_VND_PER_EXP, 0, ',', '.') ?> ₫ = 1 EXP.</p>
+    <p class="rank-footnote">Tích lũy <?= number_format((int)$rankProfile['spend_remainder'], 0, ',', '.') ?> ₫ / <?= number_format(RANK_VND_PER_EXP, 0, ',', '.') ?> ₫ cho EXP kế tiếp.</p>
   </section>
   <section class="card">
     <h2 style="font-size:18px">Tài khoản</h2>

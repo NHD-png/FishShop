@@ -32,9 +32,8 @@ $pageTitle = 'Đăng nhập'; $minimal = true;
 include __DIR__ . '/includes/header.php';
 ?>
 <section class="auth card">
-  <div class="logo-img"><img src="<?= url('assets/images/logo.png') ?>" alt="WebBanCa"></div>
   <h1>Đăng nhập</h1>
-  <p class="sub">Đăng nhập để xem và mua cá tươi.</p>
+  <p class="sub">Chào mừng bạn trở lại Fish Shop.</p>
   <?php if ($error): ?><div class="alert err" role="alert"><?= e($error) ?></div><?php endif; ?>
   <form method="post" class="js-validate" novalidate>
     <?= csrf_field() ?>

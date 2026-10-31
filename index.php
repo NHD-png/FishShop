@@ -24,10 +24,13 @@ $products = $st->fetchAll();
 $pageTitle = 'Trang chủ';
 include __DIR__ . '/includes/header.php';
 ?>
-<section class="page-intro">
-  <h1>Xin chào, <?= e($user['fullname']) ?></h1>
-  <p>Chọn cá tươi theo danh mục, thêm vào giỏ và đặt hàng trong vài bước.</p>
-</section>
+<?php if ($q === '' && $cat === 0): ?>
+<?php include __DIR__ . '/includes/hero.php'; ?>
+<?php endif; ?>
+<div class="catalog-heading" id="san-pham">
+  <h2>Sản phẩm tại cửa hàng</h2>
+  <p>Xin chào, <?= e($user['fullname']) ?></p>
+</div>
 
 <nav class="shop-views" aria-label="Danh mục cá">
   <?php $keep = http_build_query(array_filter(['q' => $q, 'sort' => $sort !== 'new' ? $sort : ''])); ?>

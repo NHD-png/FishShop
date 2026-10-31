@@ -15,6 +15,7 @@ const SECURITY_QUESTIONS = [
     'favorite_teacher' => 'Tên giáo viên bạn yêu quý nhất là gì?',
     'childhood_friend' => 'Tên người bạn thân thời thơ ấu của bạn là gì?',
 ];
+const RANK_VND_PER_EXP = 10000;
 const CUSTOMER_RANKS = [
     ['code' => 'dong', 'name' => 'Đồng', 'min' => 0],
     ['code' => 'bac', 'name' => 'Bạc', 'min' => 100],
@@ -109,7 +110,7 @@ function sync_order_rank(PDO $pdo, int $orderId): array {
 
     $totalSpend = (int)$profile['total_eligible_spend'] + $newAmount - $oldAmount;
     if ($totalSpend < 0) throw new RuntimeException('Tổng chi tiêu hợp lệ của Rank không thể âm.');
-    $totalExp = intdiv($totalSpend, 1000);
+    $totalExp = intdiv($totalSpend, RANK_VND_PER_EXP);
     $rank = customer_rank($totalExp);
     $previousRank = customer_rank((int)$profile['total_exp'])['current'];
     $previousIndex = array_search($previousRank['code'], array_column(CUSTOMER_RANKS, 'code'), true);
@@ -128,7 +129,7 @@ function sync_order_rank(PDO $pdo, int $orderId): array {
     )->execute([
         $totalSpend,
         $totalExp,
-        $totalSpend % 1000,
+        $totalSpend % RANK_VND_PER_EXP,
         $rank['current']['code'],
         $rankedUp ? 1 : 0,
         $currentIndex < $previousIndex ? 1 : 0,

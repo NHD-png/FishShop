@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 29, 2026 lúc 05:16 PM
+-- Thời gian đã tạo: Th10 31, 2026 lúc 09:16 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
--- Phiên bản PHP: 8.0.30
+-- Phiên bản PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -34,6 +34,13 @@ CREATE TABLE `cart` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `cart`
+--
+
+INSERT INTO `cart` (`id`, `user_id`, `created_at`, `updated_at`) VALUES
+(1, 1, '2026-10-31 07:40:29', '2026-10-31 07:43:27');
+
 -- --------------------------------------------------------
 
 --
@@ -45,7 +52,7 @@ CREATE TABLE `cart_items` (
   `cart_id` int(10) UNSIGNED NOT NULL,
   `product_id` int(10) UNSIGNED NOT NULL,
   `quantity` int(10) UNSIGNED NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 -- --------------------------------------------------------
 
@@ -59,6 +66,18 @@ CREATE TABLE `categories` (
   `description` text DEFAULT NULL,
   `status` enum('active','inactive') NOT NULL DEFAULT 'active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `categories`
+--
+
+INSERT INTO `categories` (`id`, `name`, `description`, `status`) VALUES
+(1, 'Cá nước ngọt', 'Các loài cá sống trong môi trường nước ngọt.', 'active'),
+(2, 'Cá nước mặn', 'Các loài cá sống trong môi trường nước mặn.', 'active'),
+(3, 'Cá cảnh', 'Các loài cá nuôi làm cảnh.', 'active'),
+(4, 'Sinh vật thần thoại', 'Các sinh vật trong thần thoại và truyền thuyết.', 'active'),
+(5, 'Sinh vật cổ đại', 'Các sinh vật cổ đại và tiền sử.', 'active'),
+(6, 'Khác', 'Các sản phẩm không thuộc những danh mục trên.', 'active');
 
 -- --------------------------------------------------------
 
@@ -76,14 +95,14 @@ CREATE TABLE `customer_ranks` (
   `last_rank_up_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Đang đổ dữ liệu cho bảng `customer_ranks`
 --
 
 INSERT INTO `customer_ranks` (`id`, `user_id`, `total_exp`, `total_eligible_spend`, `spend_remainder`, `current_rank`, `last_rank_up_at`, `created_at`, `updated_at`) VALUES
-(1, 1, 0, 0, 0, 'dong', NULL, '2026-10-28 15:40:49', '2026-10-28 15:40:49'),
+(1, 1, 20, 200000, 0, 'dong', NULL, '2026-10-28 15:40:49', '2026-10-31 07:53:50'),
 (2, 2, 0, 0, 0, 'dong', NULL, '2026-10-29 15:28:40', '2026-10-29 15:28:40');
 
 -- --------------------------------------------------------
@@ -101,7 +120,16 @@ CREATE TABLE `orders` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `status` enum('pending','confirmed','shipping','completed','cancelled') NOT NULL DEFAULT 'pending',
   `payment_status` enum('unpaid','pending_verification','paid','rejected') NOT NULL DEFAULT 'unpaid'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
+
+--
+-- Đang đổ dữ liệu cho bảng `orders`
+--
+
+INSERT INTO `orders` (`id`, `user_id`, `total`, `shipping_address`, `phone`, `created_at`, `status`, `payment_status`) VALUES
+(1, 1, 100000, 'Duy_Vip_Pro', '00000000000', '2026-10-31 07:40:42', 'completed', 'paid'),
+(2, 1, 100000, 'Duy_Vip_Pro', '00000000000', '2026-10-31 07:41:54', 'cancelled', 'paid'),
+(3, 1, 100000, 'Duy_Vip_Pro', '00000000000', '2026-10-31 07:43:33', 'completed', 'paid');
 
 -- --------------------------------------------------------
 
@@ -115,7 +143,16 @@ CREATE TABLE `order_items` (
   `product_id` int(10) UNSIGNED NOT NULL,
   `quantity` int(10) UNSIGNED NOT NULL,
   `price` decimal(12,0) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
+
+--
+-- Đang đổ dữ liệu cho bảng `order_items`
+--
+
+INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
+(1, 1, 1, 1, 100000),
+(2, 2, 1, 1, 100000),
+(3, 3, 1, 1, 100000);
 
 -- --------------------------------------------------------
 
@@ -160,7 +197,14 @@ CREATE TABLE `products` (
   `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
+
+--
+-- Đang đổ dữ liệu cho bảng `products`
+--
+
+INSERT INTO `products` (`id`, `name`, `price`, `image`, `description`, `category_id`, `stock`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'Hồ Thái Khang', 100000, 'uploads/products/986f2760ebb3ea0a75d0e78c.jpg', 'Còn sót lại trong kho 1 con', 6, 9, 'active', '2026-10-31 07:40:13', '2026-10-31 07:43:33');
 
 -- --------------------------------------------------------
 
@@ -175,7 +219,15 @@ CREATE TABLE `rank_order_earnings` (
   `is_active` tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
+
+--
+-- Đang đổ dữ liệu cho bảng `rank_order_earnings`
+--
+
+INSERT INTO `rank_order_earnings` (`order_id`, `user_id`, `spend_amount`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 1, 100000, 1, '2026-10-31 07:52:35', '2026-10-31 07:52:35'),
+(3, 1, 100000, 1, '2026-10-31 07:53:50', '2026-10-31 07:53:50');
 
 -- --------------------------------------------------------
 
@@ -208,7 +260,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `password`, `fullname`, `email`, `security_question`, `security_answer_hash`, `phone`, `address`, `avatar`, `role`, `account_status`, `locked_reason`, `locked_note`, `locked_at`, `locked_by_admin_id`, `created_at`) VALUES
-(1, 'DuySieuCapDeptrai', '$2y$10$rmtLXlTfWhkJaossU2UODe58JNKrp5QPrz/RTWHx8UmqYv5HTI1ui', 'Nguyễn Hoàng Duy', NULL, 'favorite_teacher', '$2y$10$GztX4qcjTgIGXhh5hdP.AuIlLRiew5K3Zc50fa8F2PuwbVyVIRBGW', '00000000000', 'Duy_Vip_Pro', NULL, 'admin', 'active', NULL, NULL, NULL, NULL, '2026-10-28 15:40:49'),
+(1, 'DuySieuCapDeptrai', '$2y$10$rmtLXlTfWhkJaossU2UODe58JNKrp5QPrz/RTWHx8UmqYv5HTI1ui', 'Nguyễn Hoàng Duy', NULL, 'favorite_teacher', '$2y$10$GztX4qcjTgIGXhh5hdP.AuIlLRiew5K3Zc50fa8F2PuwbVyVIRBGW', '00000000000', 'Duy_Vip_Pro', 'uploads/avatars/17e1fff455cfa2afc05d6c9f.webp', 'admin', 'active', NULL, NULL, NULL, NULL, '2026-10-28 15:40:49'),
 (2, 'KhangGay', '$2y$10$m8hgdOa2MtkUSe9eKunTIedwpo.v9TnKwf9axNi6DQw.Nx9Ovtou2', 'Hồ Thái Khang', 'fff2@gmail.com', 'favorite_teacher', '$2y$10$pjYo4IU3fiwjQLnp.CLO6OSNIenwzGfHGN.PtJyimhXpOld3o6aNC', '', 'Địa Ngục', NULL, 'customer', 'locked', 'Có dấu hiệu gian lận đơn hàng', '', '2026-10-29 23:09:52', 1, '2026-10-29 15:28:40');
 
 -- --------------------------------------------------------
@@ -272,6 +324,7 @@ ALTER TABLE `customer_ranks`
 --
 ALTER TABLE `orders`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_orders_id_user` (`id`,`user_id`),
   ADD KEY `idx_orders_user` (`user_id`),
   ADD KEY `idx_orders_status` (`status`);
 
@@ -280,6 +333,7 @@ ALTER TABLE `orders`
 --
 ALTER TABLE `order_items`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_order_product` (`order_id`,`product_id`),
   ADD KEY `idx_order_items_order` (`order_id`),
   ADD KEY `idx_order_items_product` (`product_id`);
 
@@ -308,7 +362,8 @@ ALTER TABLE `products`
 --
 ALTER TABLE `rank_order_earnings`
   ADD PRIMARY KEY (`order_id`),
-  ADD KEY `idx_rank_order_earnings_user` (`user_id`);
+  ADD KEY `idx_rank_order_earnings_user` (`user_id`),
+  ADD KEY `fk_rank_order_earnings_order` (`order_id`,`user_id`);
 
 --
 -- Chỉ mục cho bảng `users`
@@ -336,7 +391,7 @@ ALTER TABLE `user_account_lock_history`
 -- AUTO_INCREMENT cho bảng `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT cho bảng `cart_items`
@@ -348,13 +403,13 @@ ALTER TABLE `cart_items`
 -- AUTO_INCREMENT cho bảng `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT cho bảng `customer_ranks`
 --
 ALTER TABLE `customer_ranks`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT cho bảng `orders`
@@ -378,7 +433,7 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT cho bảng `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `user_account_lock_history`
@@ -444,8 +499,21 @@ ALTER TABLE `products`
 -- Các ràng buộc cho bảng `rank_order_earnings`
 --
 ALTER TABLE `rank_order_earnings`
-  ADD CONSTRAINT `fk_rank_order_earnings_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_rank_order_earnings_order` FOREIGN KEY (`order_id`,`user_id`) REFERENCES `orders` (`id`, `user_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_rank_order_earnings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_users_locked_by_admin` FOREIGN KEY (`locked_by_admin_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `user_account_lock_history`
+--
+ALTER TABLE `user_account_lock_history`
+  ADD CONSTRAINT `fk_user_lock_history_admin` FOREIGN KEY (`performed_by_admin_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_user_lock_history_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

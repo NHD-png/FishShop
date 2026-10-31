@@ -78,7 +78,6 @@ $pageTitle = 'Đăng ký'; $minimal = true;
 include __DIR__ . '/includes/header.php';
 ?>
 <section class="auth card">
-  <div class="logo-img"><img src="<?= url('assets/images/logo.png') ?>" alt="WebBanCa"></div>
   <h1>Tạo tài khoản</h1>
   <p class="sub">Chỉ mất một phút để bắt đầu mua cá.</p>
   <?php if ($errors): ?><div class="alert err" role="alert"><?php foreach ($errors as $er): ?><div><?= e($er) ?></div><?php endforeach; ?></div><?php endif; ?>

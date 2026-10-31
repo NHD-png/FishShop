@@ -4,7 +4,7 @@ WEBBANCA - HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY
 1. CÀI ĐẶT
 ----------
 1) Cài XAMPP (Windows), mở XAMPP Control Panel và Start "Apache" và "MySQL".
-2) Chép nguyên thư mục WebBanCa vào:  C:\xampp\htdocs\WebBanCa\
+2) Chép nguyên thư mục FishShop vào:  C:\xampp\htdocs\FishShop\
 3) Với cài đặt mới, tạo/chọn database WebBanCa trong phpMyAdmin rồi nhập database\webbanca.sql.
    Đây là SQL dump có schema và dữ liệu; không nhập đè lên database website đang sử dụng.
    Nếu website đã có dữ liệu, sao lưu trước và chỉ chạy migration còn thiếu, không nhập lại dump.
@@ -12,11 +12,11 @@ WEBBANCA - HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY
    một lần để bật email và khôi phục mật khẩu (xem mục 8).
 5) Kiểm tra config\database.php: mặc định root, mật khẩu rỗng (đúng với XAMPP).
    Nếu bạn đặt thư mục tên khác, đổi BASE_URL trong file này.
-6) Mở http://localhost/WebBanCa/  (chưa đăng nhập sẽ tự chuyển sang trang đăng nhập).
+6) Mở http://localhost/FishShop/  (chưa đăng nhập sẽ tự chuyển sang trang đăng nhập).
 
 2. TẠO TÀI KHOẢN QUẢN TRỊ (an toàn, không có mật khẩu mặc định)
 -----------------------------------------------------------------
-1) Vào http://localhost/WebBanCa/register.php và đăng ký một tài khoản bình thường.
+1) Vào http://localhost/FishShop/register.php và đăng ký một tài khoản bình thường.
 2) Mở phpMyAdmin > database WebBanCa > bảng users > chọn "Sửa" ở dòng tài khoản đó.
 3) Đổi cột role từ customer thành admin > Thực hiện.
 4) Đăng xuất rồi đăng nhập lại: trên thanh điều hướng sẽ có mục "Quản trị".
@@ -24,7 +24,7 @@ WEBBANCA - HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY
 
 3. ẢNH QR THANH TOÁN
 --------------------
-Đặt ảnh QR thật của bạn tại:  C:\xampp\htdocs\WebBanCa\payment\NapTienDi.jpg
+Đặt ảnh QR thật của bạn tại:  C:\xampp\htdocs\FishShop\payment\NapTienDi.jpg
 (đúng tên, đúng chữ hoa/thường). Chưa có file thì trang thanh toán hiện thông báo:
 "Chưa có ảnh QR thanh toán. Vui lòng bổ sung file payment/NapTienDi.jpg."
 Thư mục uploads\products và uploads\avatars đã có sẵn; PHP tự lưu ảnh vào đó.
@@ -38,7 +38,7 @@ users 1 --- 1 customer_ranks; users 1 --- n rank_order_earnings n --- 1 orders
 - cart_items UNIQUE(cart_id, product_id): không trùng dòng sản phẩm trong giỏ.
 - order_items.price: giá tại thời điểm mua.
 - customer_ranks.user_id UNIQUE: mỗi tài khoản có tối đa một hồ sơ Rank; tổng chi tiêu hợp lệ
-  giữ cả phần dư dưới 1.000 đồng để cộng EXP chính xác qua nhiều đơn.
+  giữ cả phần dư dưới 10.000 đồng để cộng EXP chính xác qua nhiều đơn.
 - rank_order_earnings.order_id PRIMARY KEY: một đơn chỉ được cộng một lần; khoản điểm bị vô hiệu
   khi đơn không còn vừa completed vừa paid.
 - order_items.product_id và orders.user_id dùng ON DELETE RESTRICT: không xóa được
@@ -59,7 +59,7 @@ users 1 --- 1 customer_ranks; users 1 --- n rank_order_earnings n --- 1 orders
 
 6. KIỂM TRA TỪNG CHỨC NĂNG
 --------------------------
-[ ] Mở /WebBanCa/ khi chưa đăng nhập: bị chuyển về trang đăng nhập.
+[ ] Mở /FishShop/ khi chưa đăng nhập: bị chuyển về trang đăng nhập.
 [ ] Đăng ký: tên trùng báo lỗi; mật khẩu trong bảng users là chuỗi băm ($2y$...).
 [ ] Đăng nhập sai: báo lỗi; đúng: vào trang chủ, thấy tên + nút Đăng xuất.
 [ ] Đăng xuất rồi bấm nút Back của trình duyệt, tải lại: vẫn bị chuyển về đăng nhập.
@@ -72,10 +72,10 @@ users 1 --- 1 customer_ranks; users 1 --- n rank_order_earnings n --- 1 orders
 [ ] Đặt hàng: xuất hiện trang thanh toán; tồn kho giảm; giỏ trống; đơn có trong "Đơn của tôi".
 [ ] Đặt file payment\NapTienDi.jpg: ảnh QR hiển thị.
 [ ] Đăng nhập tài khoản khác, mở purchase_history.php?id=<mã đơn người khác>: bị chặn.
-[ ] Tài khoản customer mở /WebBanCa/admin/: bị chuyển về trang chủ kèm thông báo.
+[ ] Tài khoản customer mở /FishShop/admin/: bị chuyển về trang chủ kèm thông báo.
 [ ] Admin xác nhận "Đã thanh toán" trong admin/orders.php; khách thấy trạng thái cập nhật.
 [ ] Admin đặt đơn sang "Đã hoàn thành" đồng thời giữ "Đã thanh toán"; hồ sơ khách nhận EXP đúng theo
-    tổng order_items (100.000 đồng = 100 EXP), gồm phần dư tích lũy giữa các đơn nhỏ.
+    tổng order_items (100.000 đồng = 10 EXP), gồm phần dư tích lũy giữa các đơn nhỏ.
 [ ] Thử tổng 500 EXP, 20.000 EXP và 100.000 EXP để kiểm tra các mốc Vàng, Cao Thủ, Thách Đấu;
     lưu lại trạng thái đơn lần nữa không cộng điểm trùng.
 [ ] Đơn pending/unpaid hoặc cancelled không được tính; hủy đơn đủ điều kiện sẽ rút khoản điểm đó.
@@ -83,7 +83,7 @@ users 1 --- 1 customer_ranks; users 1 --- n rank_order_earnings n --- 1 orders
 7. LỖI THƯỜNG GẶP
 -----------------
 - "Không kết nối được MySQL": chưa Start MySQL, chưa nhập SQL, hoặc sai thông tin trong config\database.php.
-- Trang trắng / lỗi 404: sai vị trí thư mục (phải là htdocs\WebBanCa) hoặc sai BASE_URL.
+- Trang trắng / lỗi 404: sai vị trí thư mục (phải là htdocs\FishShop) hoặc sai BASE_URL.
 - CSS không áp dụng: BASE_URL sai so với tên thư mục thật.
 - Tải ảnh không được: ảnh > 2MB, không phải JPG/PNG/WEBP, hoặc thư mục uploads bị khóa ghi.
   Nếu ảnh quá lớn so với giới hạn của PHP, tăng upload_max_filesize và post_max_size trong php.ini rồi restart Apache.
