@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../includes/upload.php';
 requireAdmin();
 
@@ -17,16 +17,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif ($up['error'] !== 'none') $errors[] = $up['error'];
     }
     if (!$errors) {
-        db()->prepare('INSERT INTO products (name, price, image, description, category_id, stock, status) VALUES (?,?,?,?,?,?,?)')
-            ->execute([$d['name'], (int)$d['price'], $imagePath, $d['description'], $d['category_id'], (int)$d['stock'], $d['status']]);
-        flash('success', 'Đã thêm sản phẩm “' . $d['name'] . '”.');
-        redirect('admin/products.php');
+        try {
+            db()->prepare('INSERT INTO products (name, price, image, description, category_id, stock, status) VALUES (?,?,?,?,?,?,?)')
+                ->execute([$d['name'], (int)$d['price'], $imagePath, $d['description'], $d['category_id'], (int)$d['stock'], $d['status']]);
+        } catch (Throwable $ex) {
+            delete_uploaded_image($imagePath);
+            error_log('FishShop could not save new product.');
+            $errors[] = 'Không lưu được sản phẩm. Vui lòng thử lại.';
+        }
+        if (!$errors) {
+            flash('success', 'Đã thêm sản phẩm “' . $d['name'] . '”.');
+            redirect('admin/products.php');
+        }
     }
 }
 $pageTitle = 'Thêm sản phẩm'; $submitLabel = 'Lưu sản phẩm';
-include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/_header.php';
 ?>
 <section class="page-intro"><h1>Thêm sản phẩm</h1><p>Nhập thông tin, chọn ảnh và nhấn lưu. Không cần sửa file HTML.</p></section>
-<?php include __DIR__ . '/../includes/admin_nav.php'; ?>
 <?php include __DIR__ . '/../includes/product_form.php'; ?>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+<?php include __DIR__ . '/_footer.php'; ?>

@@ -1,10 +1,12 @@
 <?php
 // Phần hiển thị lưới sản phẩm. Cần biến $products (mảng lấy từ database) trước khi include.
+$productListPage = $productListPage ?? 'index.php';
+$productListBack = $productListBack ?? $productListPage;
 if (!$products): ?>
   <div class="empty">
     <h2>Chưa có sản phẩm phù hợp</h2>
     <p>Cửa hàng chưa có cá nào, hoặc không có kết quả cho bộ lọc hiện tại.</p>
-    <a class="btn ghost" href="<?= url('index.php') ?>">Xem tất cả</a>
+    <a class="btn ghost" href="<?= e(url($productListPage)) ?>">Xem tất cả</a>
   </div>
 <?php else: ?>
   <div class="product-list">
@@ -13,6 +15,12 @@ if (!$products): ?>
       <a class="im" href="<?= url('product_detail.php?id=' . (int)$p['id']) ?>">
         <img src="<?= e(file_url($p['image'])) ?>" alt="<?= e($p['name']) ?>" loading="lazy">
       </a>
+      <?php if (!empty($catalogCards)): ?>
+      <div class="catalog-image-tags">
+        <?php if (!empty($p['is_new'])): ?><span class="catalog-new-tag">Mới</span><?php endif; ?>
+        <?php if ((int)($p['sold_count'] ?? 0) > 0): ?><span class="catalog-sold-tag">Đã bán <?=(int)$p['sold_count']?></span><?php endif; ?>
+      </div>
+      <?php endif; ?>
       <div class="body">
         <span class="cat"><?= e($p['category_name']) ?></span>
         <h3><a href="<?= url('product_detail.php?id=' . (int)$p['id']) ?>"><?= e($p['name']) ?></a></h3>
@@ -24,7 +32,7 @@ if (!$products): ?>
             <?= csrf_field() ?>
             <input type="hidden" name="product_id" value="<?= (int)$p['id'] ?>">
             <input type="hidden" name="quantity" value="1">
-            <input type="hidden" name="back" value="index.php">
+            <input type="hidden" name="back" value="<?= e($productListBack) ?>">
             <button class="btn sm block" type="submit" <?= $out ? 'disabled' : '' ?>>Thêm vào giỏ</button>
           </form>
         </div>

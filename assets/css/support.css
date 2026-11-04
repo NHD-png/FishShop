@@ -1,0 +1,7 @@
+.support-intro { margin-top:32px; }
+.support-sections { display:grid; gap:20px; margin:24px 0; }
+.support-card h2 { margin:0 0 16px; font-size:22px; }
+.support-card details { border-top:1px solid var(--line); padding:14px 0; }
+.support-card details:last-child { padding-bottom:0; }
+.support-card summary { color:var(--ink); cursor:pointer; font-weight:700; }
+.support-card details p { margin:10px 0 0; color:var(--mute); line-height:1.7; }

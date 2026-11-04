@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$user = requireLogin();   // chưa đăng nhập -> chuyển về login.php
+$user = current_user();
 
 $q    = trim($_GET['q'] ?? '');
 $cat  = (int)($_GET['cat'] ?? 0);
@@ -29,7 +29,7 @@ include __DIR__ . '/includes/header.php';
 <?php endif; ?>
 <div class="catalog-heading" id="san-pham">
   <h2>Sản phẩm tại cửa hàng</h2>
-  <p>Xin chào, <?= e($user['fullname']) ?></p>
+  <p><?= $user ? 'Xin chào, ' . e($user['fullname']) : 'Khám phá và chọn những sản phẩm bạn yêu thích.' ?></p>
 </div>
 
 <nav class="shop-views" aria-label="Danh mục cá">

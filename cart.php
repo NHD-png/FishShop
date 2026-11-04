@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$user  = requireLogin();
-$lines = cart_lines((int)$user['id']);
+require_once __DIR__ . '/includes/rewards.php';
+$user = current_user();
+$lines = current_cart_lines();
 
 $subtotal = 0; $problem = false;
 foreach ($lines as &$l) {
@@ -13,6 +14,10 @@ foreach ($lines as &$l) {
     $subtotal += (int)$l['quantity'] * (float)$l['price'];
 }
 unset($l);
+
+$rewardQuote = prize_cart_quote(db(), (int)($user['id'] ?? 0), $lines, $_SESSION);
+$rewardDiscount = $rewardQuote['coupon_discount'] + $rewardQuote['fish_discount'];
+$total = $lines ? max(1, (int)$subtotal - $rewardDiscount) : 0;
 
 $pageTitle = 'Giỏ hàng';
 include __DIR__ . '/includes/header.php';
@@ -38,7 +43,16 @@ include __DIR__ . '/includes/header.php';
           <div class="rt">Đơn giá: <?= money($l['price']) ?></div>
           <?php if ($l['bad']): ?><div class="rt bad"><?= e($l['bad']) ?></div><?php endif; ?>
         </div>
-        <div class="line-price"><?= money((int)$l['quantity'] * (float)$l['price']) ?></div>
+        <?php
+          $lineDiscount = (int)$l['product_id'] === $rewardQuote['coupon_product_id'] ? $rewardQuote['coupon_discount'] : 0;
+          if ((int)$l['product_id'] === $rewardQuote['fish_product_id']) $lineDiscount += $rewardQuote['fish_discount'];
+          $lineSubtotal = (int)$l['quantity'] * (float)$l['price'];
+        ?>
+        <div class="line-price">
+          <?php if ($lineDiscount > 0): ?><del class="rt"><?= money($lineSubtotal) ?></del><br><?php endif; ?>
+          <?= money($lineSubtotal - $lineDiscount) ?>
+          <?php if ((int)$l['product_id'] === $rewardQuote['coupon_product_id']): ?><div class="rt">Đã giảm 5% cho <?= $rewardQuote['coupon_units'] ?> sản phẩm</div><?php endif; ?>
+        </div>
         <div class="ctrl">
           <form class="js-autosubmit" action="<?= url('actions/update_cart.php') ?>" method="post" style="display:flex;gap:8px;align-items:center">
             <?= csrf_field() ?>
@@ -63,13 +77,16 @@ include __DIR__ . '/includes/header.php';
   <aside class="order-summary">
     <h2>Tóm tắt đơn hàng</h2>
     <div class="sum"><span>Tạm tính</span><span><?= money($subtotal) ?></span></div>
-    <div class="sum"><span>Phí giao hàng</span><span>Xác nhận khi giao</span></div>
-    <div class="sum t"><span>Tổng cộng</span><span><?= money($subtotal) ?></span></div>
+    <?php if ($rewardQuote['coupon_discount'] > 0): ?><div class="sum"><span>Phiếu vòng quay giảm 5% (<?= $rewardQuote['coupon_units'] ?> sản phẩm)</span><span style="color:var(--teal)">−<?= money($rewardQuote['coupon_discount']) ?></span></div><?php endif; ?>
+    <?php if ($rewardQuote['fish_discount'] > 0): ?><div class="sum"><span>Cá thưởng</span><span style="color:var(--teal)">−<?= money($rewardQuote['fish_discount']) ?></span></div><?php endif; ?>
+    <div class="sum t"><span>Tổng cộng</span><span><?= money($total) ?></span></div>
+    <?php if ($rewardDiscount > 0): ?><p class="hint">Đã tính phần thưởng đang chọn. Phiếu được trừ khỏi Kho khi đặt hàng thành công.</p><?php endif; ?>
     <?php if ($problem): ?>
       <div class="alert warn">Hãy xử lý các sản phẩm được báo đỏ trước khi mua hàng.</div>
       <span class="btn block disabled" aria-disabled="true">Tiến hành mua hàng</span>
     <?php else: ?>
-      <a class="btn block" href="<?= url('checkout.php') ?>">Tiến hành mua hàng</a>
+      <a class="btn block" href="<?= url('checkout.php') ?>"><?= $user ? 'Tiến hành mua hàng' : 'Đăng nhập để đặt hàng' ?></a>
+      <?php if (!$user): ?><p class="hint">Sản phẩm trong giỏ sẽ được giữ lại sau khi đăng nhập.</p><?php endif; ?>
     <?php endif; ?>
     <a class="btn ghost block" style="margin-top:10px" href="<?= url('index.php') ?>">Tiếp tục mua sắm</a>
   </aside>

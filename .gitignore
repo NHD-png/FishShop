@@ -1,0 +1,6 @@
+config/payos.local.php
+.env
+.env.*
+!.env.example
+storage/logs/*.log.php
+

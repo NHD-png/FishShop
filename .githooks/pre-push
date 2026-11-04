@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+
+fail() {
+  printf '%s\n' "FishShop pre-push: $1" >&2
+  printf '%s\n' 'Push blocked. Remove the credential from the commit, rotate it if exposed, then try again.' >&2
+  exit 1
+}
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -n "${local_sha:-}" ] || continue
+  [ "$local_sha" != "0000000000000000000000000000000000000000" ] || continue
+
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    commits=$(git rev-list "$local_sha" --not --remotes 2>/dev/null || git rev-list "$local_sha")
+  else
+    commits=$(git rev-list "$remote_sha..$local_sha")
+  fi
+
+  for commit in $commits; do
+    paths=$(git ls-tree -r --name-only "$commit")
+    printf '%s\n' "$paths" | grep -E '(^|/)\.env($|\.)|(^|/)payos\.local\.php$' | grep -Ev '(^|/)\.env\.example$' >/dev/null \
+      && fail "secret configuration file included in $commit"
+
+    additions=$(git diff-tree --no-commit-id --root --unified=0 --diff-filter=ACMRT -r "$commit" | sed -n 's/^+//p')
+    printf '%s\n' "$additions" | grep -Eiq "AIza[0-9A-Za-z_-]{30,}|(PAYOS_API_KEY|PAYOS_CHECKSUM_KEY|FISHSHOP_GMAIL_APP_PASSWORD|FISHSHOP_GOOGLE_CLIENT_SECRET|api_key|checksum_key|client_secret|gmail_app_password)[^[:alnum:]]{0,12}['\"][A-Za-z0-9_=-]{16,}['\"]" \
+      && fail "credential-like value found in added lines of $commit"
+  done
+done
+
+exit 0

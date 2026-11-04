@@ -244,7 +244,7 @@ include __DIR__ . '/includes/header.php';
         <div class="pw-wrap"><input id="password" name="password" type="password" data-rule="password" autocomplete="new-password" required><button class="pw-toggle" type="button">Hiện</button></div>
         <small>Ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt; tối đa 72 byte.</small></div>
       <div class="field"><label for="confirm">Nhập lại mật khẩu mới</label>
-        <input id="confirm" name="confirm" type="password" data-rule="password" data-match="password" autocomplete="new-password" required></div>
+        <div class="pw-wrap"><input id="confirm" name="confirm" type="password" data-rule="password" data-match="password" autocomplete="new-password" required><button class="pw-toggle" type="button">Hiện</button></div></div>
       <button class="btn block" type="submit">Đặt lại mật khẩu</button>
     </form>
   <?php else: ?>

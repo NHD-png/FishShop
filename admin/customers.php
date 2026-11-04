@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/bootstrap.php';
 requireAdmin();
 
 $search = trim((string)($_GET['q'] ?? ''));
@@ -50,13 +50,12 @@ $listSt->execute($listArgs);
 $customers = $listSt->fetchAll();
 
 $pageTitle = 'Quản lý khách hàng';
-include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/_header.php';
 ?>
 <section class="page-intro">
   <h1>Quản lý khách hàng</h1>
   <p>Danh sách khách hàng, thống kê đơn hàng và trạng thái tài khoản.</p>
 </section>
-<?php include __DIR__ . '/../includes/admin_nav.php'; ?>
 
 <div class="tool" style="margin-top:8px;">
   <span><?= e($total) ?> khách hàng</span>
@@ -111,13 +110,13 @@ include __DIR__ . '/../includes/header.php';
               <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
                 <a class="btn ghost sm" href="<?= url('admin/customer_detail.php?id=' . (int)$c['id']) ?>">Chi tiết</a>
                 <?php if (($c['account_status'] ?? 'active') === 'active'): ?>
-                  <form method="post" action="<?= url('actions/lock_user.php') ?>" data-confirm="Khóa tài khoản <?= e($c['username']) ?>?">
+                  <form method="post" action="<?= url('admin/lock_user.php') ?>" data-confirm="Khóa tài khoản <?= e($c['username']) ?>?">
                     <?= csrf_field() ?>
                     <input type="hidden" name="user_id" value="<?= (int)$c['id'] ?>">
                     <button class="btn danger sm" type="submit">Khóa</button>
                   </form>
                 <?php else: ?>
-                  <form method="post" action="<?= url('actions/unlock_user.php') ?>" data-confirm="Mở khóa tài khoản <?= e($c['username']) ?>?">
+                  <form method="post" action="<?= url('admin/unlock_user.php') ?>" data-confirm="Mở khóa tài khoản <?= e($c['username']) ?>?">
                     <?= csrf_field() ?>
                     <input type="hidden" name="user_id" value="<?= (int)$c['id'] ?>">
                     <button class="btn ghost sm" type="submit">Mở khóa</button>
@@ -145,4 +144,4 @@ include __DIR__ . '/../includes/header.php';
     </div>
   <?php endif; ?>
 <?php endif; ?>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+<?php include __DIR__ . '/_footer.php'; ?>

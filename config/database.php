@@ -10,7 +10,7 @@ const BASE_URL = '/FishShop/';
 
 // Điền thông tin liên hệ thật của Admin; để trống nếu chưa cấu hình.
 const ADMIN_CONTACT_EMAIL = '';
-const ADMIN_CONTACT_PHONE = '';
+const ADMIN_CONTACT_PHONE = '0354588773';
 
 function db(): PDO
 {

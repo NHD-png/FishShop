@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/bootstrap.php';
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -13,10 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $products = db()->query('SELECT p.*, c.name AS category_name FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.id DESC')->fetchAll();
 
 $pageTitle = 'Quản lý sản phẩm';
-include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/_header.php';
 ?>
 <section class="page-intro"><h1>Sản phẩm</h1><p>Thêm, sửa và ngừng bán cá. Sản phẩm đã có đơn hàng không bị xóa để giữ lịch sử mua.</p></section>
-<?php include __DIR__ . '/../includes/admin_nav.php'; ?>
 <p style="margin-bottom:16px"><a class="btn" href="<?= url('admin/add_product.php') ?>">Thêm sản phẩm</a></p>
 <?php if (!$products): ?>
   <div class="empty"><h2>Chưa có sản phẩm</h2><p>Hãy tạo danh mục, sau đó thêm sản phẩm đầu tiên.</p><a class="btn" href="<?= url('admin/add_product.php') ?>">Thêm sản phẩm</a></div>
@@ -45,4 +44,4 @@ include __DIR__ . '/../includes/header.php';
   </tbody>
 </table></div>
 <?php endif; ?>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+<?php include __DIR__ . '/_footer.php'; ?>

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/bootstrap.php';
 requireAdmin();
 
 $id = (int)($_GET['id'] ?? 0);
@@ -39,13 +39,12 @@ $historySt->execute([$id]);
 $history = $historySt->fetchAll();
 
 $pageTitle = 'Chi tiết khách hàng';
-include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/_header.php';
 ?>
 <section class="page-intro">
   <h1>Khách hàng: <?= e($customer['username']) ?></h1>
   <p>Thông tin tài khoản, lịch sử đặt hàng và trạng thái khóa tài khoản.</p>
 </section>
-<?php include __DIR__ . '/../includes/admin_nav.php'; ?>
 
 <div class="cart">
   <section class="card">
@@ -73,7 +72,7 @@ include __DIR__ . '/../includes/header.php';
     <?php endif; ?>
     <div style="margin-top:18px;">
       <?php if (($customer['account_status'] ?? 'active') === 'active'): ?>
-        <form method="post" action="<?= url('actions/lock_user.php') ?>" data-confirm="Khóa tài khoản <?= e($customer['username']) ?>?">
+        <form method="post" action="<?= url('admin/lock_user.php') ?>" data-confirm="Khóa tài khoản <?= e($customer['username']) ?>?">
           <?= csrf_field() ?>
           <input type="hidden" name="user_id" value="<?= (int)$customer['id'] ?>">
           <div class="field">
@@ -93,7 +92,7 @@ include __DIR__ . '/../includes/header.php';
           <button class="btn danger block" type="submit">Khóa tài khoản</button>
         </form>
       <?php else: ?>
-        <form method="post" action="<?= url('actions/unlock_user.php') ?>" data-confirm="Mở khóa tài khoản <?= e($customer['username']) ?>?">
+        <form method="post" action="<?= url('admin/unlock_user.php') ?>" data-confirm="Mở khóa tài khoản <?= e($customer['username']) ?>?">
           <?= csrf_field() ?>
           <input type="hidden" name="user_id" value="<?= (int)$customer['id'] ?>">
           <button class="btn block" type="submit">Mở khóa tài khoản</button>
@@ -167,4 +166,4 @@ include __DIR__ . '/../includes/header.php';
   </section>
 <?php endif; ?>
 
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+<?php include __DIR__ . '/_footer.php'; ?>

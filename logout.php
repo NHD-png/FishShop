@@ -12,4 +12,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     flash('success', 'Bạn đã đăng xuất.');
     session_regenerate_id(true);
 }
-redirect('login.php');
+redirect('index.php');

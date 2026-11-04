@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/bootstrap.php';
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -28,10 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $cats = db()->query('SELECT c.*, (SELECT COUNT(*) FROM products WHERE category_id = c.id) AS n FROM categories c ORDER BY c.name')->fetchAll();
 
 $pageTitle = 'Quản lý danh mục';
-include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/_header.php';
 ?>
 <section class="page-intro"><h1>Danh mục cá</h1><p>Danh mục bị ẩn sẽ không hiện trên website cùng các sản phẩm của nó.</p></section>
-<?php include __DIR__ . '/../includes/admin_nav.php'; ?>
 <form method="post" class="card form-card" style="margin-bottom:24px">
   <h2 style="font-size:18px;margin-bottom:14px">Thêm danh mục</h2>
   <?= csrf_field() ?><input type="hidden" name="id" value="0">
@@ -65,4 +64,4 @@ include __DIR__ . '/../includes/header.php';
   </tbody>
 </table></div>
 <?php endif; ?>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+<?php include __DIR__ . '/_footer.php'; ?>

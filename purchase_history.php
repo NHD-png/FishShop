@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/payos.php';
+require_once __DIR__ . '/includes/location.php';
 $user = requireLogin();
 $uid = (int)$user['id'];
 $detailId = (int)($_GET['id'] ?? 0);
@@ -40,12 +42,21 @@ include __DIR__ . '/includes/header.php';
       <h2>Thông tin đơn</h2>
       <div class="sum"><span>Ngày đặt</span><span><?= e(date('d/m/Y H:i', strtotime($order['created_at']))) ?></span></div>
       <div class="sum"><span>Trạng thái đơn</span><span class="tag <?= e($order['status']) ?>"><?= e(ORDER_STATUS[$order['status']]) ?></span></div>
-      <div class="sum"><span>Thanh toán</span><span class="tag <?= e($order['payment_status']) ?>"><?= e(PAYMENT_STATUS[$order['payment_status']]) ?></span></div>
+      <div class="sum"><span>Thanh toán</span><span id="order-payment-status" class="tag <?= e($order['payment_status']) ?>"><?= e(PAYMENT_STATUS[$order['payment_status']]) ?></span></div>
       <div class="sum"><span>Điện thoại</span><span><?= e($order['phone']) ?></span></div>
       <div class="sum"><span>Giao đến</span><span style="text-align:right;white-space:normal"><?= e($order['shipping_address']) ?></span></div>
+      <?php if ($deliveryUrl = shipping_location_url($order)): ?>
+      <p style="margin:10px 0"><a class="btn ghost sm" href="<?= e($deliveryUrl) ?>" target="_blank" rel="noopener noreferrer">Xem điểm giao hàng</a></p>
+      <?php endif; ?>
+      <?php $totalsOrder = $order; include __DIR__ . '/includes/order_totals.php'; ?>
       <div class="sum t"><span>Tổng tiền</span><span><?= money($order['total']) ?></span></div>
       <?php if ($order['status'] !== 'cancelled' && $order['payment_status'] !== 'paid'): ?>
-        <a class="btn block" href="<?= url('payment.php?id=' . (int)$order['id']) ?>">Thanh toán / xem mã QR</a>
+        <?php $orderPaymentMethod = $order['payment_method'] ?? 'bank_transfer'; ?>
+        <a id="order-payment-action" class="btn block" href="<?= url('payment.php?id=' . (int)$order['id']) ?>"><?= e(match ($orderPaymentMethod) {
+            'cash' => 'Xem thông tin thanh toán',
+            'payos' => 'Chuyển khoản ngân hàng',
+            default => 'Thanh toán / xem mã QR ngân hàng',
+        }) ?></a>
       <?php endif; ?>
       <a class="btn ghost block" style="margin-top:10px" href="<?= url('purchase_history.php') ?>">Quay lại danh sách</a>
     </aside>
@@ -73,5 +84,31 @@ include __DIR__ . '/includes/header.php';
       </tbody>
     </table></div>
   <?php endif; ?>
+<?php endif; ?>
+<?php if ($order && ($order['payment_method'] ?? '') === 'payos' && $order['payment_status'] !== 'paid' && $order['status'] !== 'cancelled'): ?>
+<script>
+  (() => {
+    const statusUrl = <?= json_encode(url('actions/payment_status.php?id=' . (int)$order['id']), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    const badge = document.getElementById('order-payment-status');
+    const action = document.getElementById('order-payment-action');
+    let attempts = 0;
+    const timer = window.setInterval(async () => {
+      attempts += 1;
+      try {
+        const response = await fetch(statusUrl, {headers: {'Accept': 'application/json'}, cache: 'no-store'});
+        const result = await response.json();
+        if (response.ok && result.payment_status === 'paid') {
+          window.clearInterval(timer);
+          badge.textContent = 'Đã thanh toán';
+          badge.classList.remove('unpaid');
+          badge.classList.add('paid');
+          if (action) action.remove();
+          return;
+        }
+      } catch (error) {}
+      if (attempts >= 36) window.clearInterval(timer);
+    }, 5000);
+  })();
+</script>
 <?php endif; ?>
 <?php include __DIR__ . '/includes/footer.php'; ?>

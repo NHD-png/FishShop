@@ -56,14 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_type'] ?? '') === 'se
         elseif ($up['error'] !== 'none') $errors[] = $up['error'];
     }
     if (!$errors) {
-        if ($newAvatar) {
-            db()->prepare('UPDATE users SET fullname=?, phone=?, address=?, avatar=? WHERE id=?')->execute([$fullname, $phone, $address, $newAvatar, $user['id']]);
-            delete_uploaded_image($user['avatar']);
-        } else {
-            db()->prepare('UPDATE users SET fullname=?, phone=?, address=? WHERE id=?')->execute([$fullname, $phone, $address, $user['id']]);
+        try {
+            if ($newAvatar) {
+                db()->prepare('UPDATE users SET fullname=?, phone=?, address=?, avatar=? WHERE id=?')->execute([$fullname, $phone, $address, $newAvatar, $user['id']]);
+            } else {
+                db()->prepare('UPDATE users SET fullname=?, phone=?, address=? WHERE id=?')->execute([$fullname, $phone, $address, $user['id']]);
+            }
+        } catch (Throwable $ex) {
+            delete_uploaded_image($newAvatar);
+            error_log('FishShop could not update profile.');
+            $errors[] = 'Không lưu được thông tin cá nhân. Vui lòng thử lại.';
         }
-        flash('success', 'Đã cập nhật thông tin cá nhân.');
-        redirect('profile.php');
+        if (!$errors) {
+            if ($newAvatar) delete_uploaded_image($user['avatar']);
+            flash('success', 'Đã cập nhật thông tin cá nhân.');
+            redirect('profile.php');
+        }
     }
     $user['fullname'] = $fullname; $user['phone'] = $phone; $user['address'] = $address;
 }

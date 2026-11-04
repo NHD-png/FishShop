@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-requireLogin();
 
 $id = (int)($_GET['id'] ?? 0);
 $st = db()->prepare("SELECT p.*, c.name AS category_name FROM products p JOIN categories c ON c.id = p.category_id
@@ -13,7 +12,7 @@ $out = (int)$p['stock'] <= 0;
 $pageTitle = $p['name'];
 include __DIR__ . '/includes/header.php';
 ?>
-<p class="crumb"><a href="<?= url('index.php') ?>">Trang chủ</a> / <a href="<?= url('index.php?cat=' . (int)$p['category_id']) ?>"><?= e($p['category_name']) ?></a> / <?= e($p['name']) ?></p>
+<p class="crumb"><a href="<?= url('index.php') ?>">Trang chủ</a> / <a href="<?= url('products.php') ?>">Danh sách sản phẩm</a> / <a href="<?= url('products.php?cat=' . (int)$p['category_id']) ?>"><?= e($p['category_name']) ?></a> / <?= e($p['name']) ?></p>
 <section class="detail">
   <div class="big"><img src="<?= e(file_url($p['image'])) ?>" alt="<?= e($p['name']) ?>"></div>
   <div class="info">

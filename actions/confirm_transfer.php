@@ -7,7 +7,7 @@ $id = (int)($_POST['order_id'] ?? 0);
 requirePost('purchase_history.php');
 
 $st = db()->prepare("UPDATE orders SET payment_status = 'pending_verification'
-                     WHERE id = ? AND user_id = ? AND status <> 'cancelled' AND payment_status IN ('unpaid','rejected')");
+                     WHERE id = ? AND user_id = ? AND payment_method = 'bank_transfer' AND status <> 'cancelled' AND payment_status IN ('unpaid','rejected')");
 $st->execute([$id, (int)$user['id']]);
 if ($st->rowCount() === 1) respond(true, 'Đã ghi nhận. Quản trị viên sẽ kiểm tra giao dịch và xác nhận thanh toán.', 'payment.php?id=' . $id);
 respond(false, 'Không thể cập nhật trạng thái thanh toán của đơn này.', 'purchase_history.php');

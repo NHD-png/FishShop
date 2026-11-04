@@ -7,7 +7,7 @@
   <img id="img-preview" class="preview" src="<?= e(file_url($product['image'] ?? null)) ?>" alt="Ảnh sản phẩm">
   <div class="field"><label for="image">Ảnh sản phẩm</label>
     <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp" data-preview="img-preview">
-    <small>JPG, PNG hoặc WEBP, tối đa 2MB. PHP tự lưu vào uploads/products/ và ghi đường dẫn vào database.</small></div>
+    <small>JPG, PNG hoặc WEBP, tối đa 2MB. Bỏ trống nếu không đổi ảnh.</small></div>
   <div class="field"><label for="name">Tên cá</label><input id="name" name="name" type="text" maxlength="150" value="<?= e($product['name']) ?>" required></div>
   <div class="two">
     <div class="field"><label for="price">Giá bán (₫)</label><input id="price" name="price" type="number" min="1" step="1" value="<?= e($product['price']) ?>" required></div>

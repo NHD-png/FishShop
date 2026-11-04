@@ -1,0 +1,18 @@
+<?php
+require_once __DIR__.'/bootstrap.php';
+require_once __DIR__.'/../includes/rewards.php';
+requireAdmin();$pdo=db();reward_schema($pdo);
+if($_SERVER['REQUEST_METHOD']==='POST'){
+    requirePost('admin/wallet_deposits.php');$id=(int)($_POST['id']??0);$decision=post_string('decision');
+    if($id<1||!in_array($decision,['approve','reject'],true)){flash('error','Yêu cầu không hợp lệ.');redirect('admin/wallet_deposits.php');}
+    try{$pdo->beginTransaction();$st=$pdo->prepare("SELECT id,user_id,amount,status,payos_payment_link_id FROM wallet_deposits WHERE id=? FOR UPDATE");$st->execute([$id]);$d=$st->fetch();if(!$d||$d['status']!=='pending')throw new DomainException('Yêu cầu đã được xử lý hoặc không tồn tại.');if(!empty($d['payos_payment_link_id']))throw new DomainException('Khoản nạp này đang chờ xác nhận tự động.');
+        if($decision==='approve'){$pdo->prepare('INSERT INTO prize_wallets(user_id,balance) VALUES(?,?) ON DUPLICATE KEY UPDATE balance=balance+VALUES(balance)')->execute([(int)$d['user_id'],(int)$d['amount']]);$status='approved';}else{$status='rejected';}
+        $pdo->prepare('UPDATE wallet_deposits SET status=?,reviewed_at=NOW(),reviewed_by=? WHERE id=?')->execute([$status,(int)current_user()['id'],$id]);$pdo->commit();flash('success',$status==='approved'?'Đã xác nhận và cộng tiền vào ví.':'Đã từ chối yêu cầu nạp tiền.');
+    }catch(Throwable $ex){if($pdo->inTransaction())$pdo->rollBack();flash('error',$ex instanceof DomainException?$ex->getMessage():'Không thể xử lý yêu cầu.');}redirect('admin/wallet_deposits.php');
+}
+$rows=$pdo->query("SELECT d.*,u.fullname,u.username FROM wallet_deposits d JOIN users u ON u.id=d.user_id ORDER BY (d.status='pending') DESC,d.id DESC")->fetchAll();
+$pageTitle='Yêu cầu nạp ví';include __DIR__.'/_header.php';
+?>
+<section class="page-intro"><h1>Yêu cầu nạp ví</h1><p>Yêu cầu cộng tiền trực tiếp cần được duyệt tại đây; thanh toán qua mã được xác nhận tự động.</p></section>
+<div class="table-wrap"><table><thead><tr><th>Mã</th><th>Khách hàng</th><th>Số tiền</th><th>Hình thức</th><th>Tạo lúc</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td>#<?=(int)$r['id']?></td><td><?=e($r['fullname'])?> (<?=e($r['username'])?>)</td><td><?=money($r['amount'])?></td><td><?php if($r['request_type']==='direct'): ?>Cộng tiền trực tiếp<?php elseif(!empty($r['payos_payment_link_id'])): ?><a href="<?=e($r['payos_checkout_url'])?>" target="_blank" rel="noopener noreferrer">Thanh toán QR</a><?php else: ?>Chờ tạo mã thanh toán<?php endif; ?><?php if(!empty($r['paid_at'])): ?><br><small>Đã trả: <?=e($r['paid_at'])?></small><?php endif; ?></td><td><?=e($r['created_at'])?></td><td><?php if($r['status']==='pending'&&$r['request_type']==='direct'): ?>Chờ duyệt<?php else: ?><?=['pending'=>'Chờ thanh toán','approved'=>!empty($r['paid_at'])?'Đã nạp tự động':'Đã cộng','rejected'=>'Từ chối'][$r['status']]?><?php endif; ?></td><td><?php if($r['status']==='pending'&&empty($r['payos_payment_link_id'])): ?><div class="voucher-table-actions"><form method="post"><?=csrf_field()?><input type="hidden" name="id" value="<?=(int)$r['id']?>"><input type="hidden" name="decision" value="approve"><button class="btn sm" type="submit"><?=$r['request_type']==='direct'?'Duyệt và cộng tiền':'Xác nhận đã nhận tiền'?></button></form><form method="post"><?=csrf_field()?><input type="hidden" name="id" value="<?=(int)$r['id']?>"><input type="hidden" name="decision" value="reject"><button class="btn ghost sm" type="submit">Từ chối</button></form></div><?php elseif($r['status']==='pending'): ?>Giao dịch sẽ cập nhật sau khi khách thanh toán.<?php endif; ?></td></tr><?php endforeach; ?></tbody></table></div>
+<?php include __DIR__.'/_footer.php'; ?>
